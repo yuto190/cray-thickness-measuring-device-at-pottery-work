@@ -81,6 +81,11 @@ def measure(name):
 
 def main():
     all_off()
+    found = i2c.scan()
+    print("# I2C devices:", [hex(a) for a in found])
+    if ADS_ADDR not in found:
+        print("# ADS1115 が 0x%02x に見つからない。配線とアドレス設定を確認" % ADS_ADDR)
+        return
     print("# label,R_alpha_ohm,R_beta_ohm,ratio,I_alpha_uA,I_beta_uA")
     while True:
         label = input("ラベル(例: t5_s2.54)を入力して Enter: ")
