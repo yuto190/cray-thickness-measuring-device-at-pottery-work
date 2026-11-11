@@ -9,7 +9,9 @@
     beta : 電流 = ピン1,2  電圧 = ピン3,4  (dipole-dipole)
 比 R_alpha / R_beta は抵抗率 rho に依存せず、t/s だけで決まる。
 
-使い方: python3 tools/four_point_model.py [ピン間隔mm ...]
+使い方:
+    python3 tools/four_point_model.py [ピン間隔mm ...]        理論値の表を出す
+    python3 tools/four_point_model.py --ratio 4.2 --s 5.08   測った比から厚み[mm]を求める
 """
 import sys
 
@@ -39,7 +41,27 @@ def beta(s, t):
     return abs(transfer_resistance(0, s, 2 * s, 3 * s, t))
 
 
+def thickness_from_ratio(ratio, s):
+    """比 R_alpha/R_beta とピン間隔 s から厚みを二分法で求める。範囲外なら None。"""
+    lo, hi = 0.05 * s, 20.0 * s
+    if not (alpha(s, hi) / beta(s, hi) < ratio < alpha(s, lo) / beta(s, lo)):
+        return None
+    for _ in range(40):
+        mid = 0.5 * (lo + hi)
+        if alpha(s, mid) / beta(s, mid) > ratio:
+            lo = mid
+        else:
+            hi = mid
+    return 0.5 * (lo + hi)
+
+
 def main():
+    if "--ratio" in sys.argv:
+        ratio = float(sys.argv[sys.argv.index("--ratio") + 1])
+        s = float(sys.argv[sys.argv.index("--s") + 1])
+        t = thickness_from_ratio(ratio, s)
+        print("範囲外 (比は 3.000〜4.819 の間のみ有効)" if t is None else f"厚み = {t:.2f} mm (s = {s:g} mm)")
+        return
     spacings = [float(a) for a in sys.argv[1:]] or [6.0, 8.0, 10.0]
     rho = 20.0  # ohm*m, 半乾燥粘土の仮定値 (未実測)
     thick = [2, 3, 4, 5, 6, 8, 10, 12, 15, 20]
