@@ -18,13 +18,14 @@ RS = 10_000.0          # 各ピンの直列抵抗 [ohm]。テスターで実測�
 ADS_ADDR = 0x48
 I2C_SDA, I2C_SCL = 6, 7                      # XIAO ESP32C3 の D4, D5
 PIN_GPIO = {1: 3, 2: 4, 3: 5, 4: 10}         # 探針番号 -> GPIO (D1, D2, D3, D10)
-AIN_OF_PIN = {1: 0, 2: 1, 3: 3, 4: 2}        # 探針番号 -> ADS1115 の AIN 番号
+AIN_OF_PIN = {1: 2, 2: 1, 3: 0, 4: 3}        # 探針番号 -> ADS1115 の AIN 番号
 
 MUX_SINGLE = {0: 0b100, 1: 0b101, 2: 0b110, 3: 0b111}
 CONFIGS = {
-    # 名前: (電流ピンA, 電流ピンB, 電圧測定のMUX設定)。A->B に流したとき電圧が正になる向き
-    "alpha": (1, 4, 0b010),   # 電流 1-4, 電圧 AIN1 - AIN3 = 探針2 - 探針3
-    "beta": (1, 2, 0b011),    # 電流 1-2, 電圧 AIN2 - AIN3 = 探針4 - 探針3
+    # 名前: (電流ピンA, 電流ピンB, 電圧測定のMUX設定, 符号)。
+    # 符号は、A->B に流したとき「MUX の読み × 符号」が正になるように決めてある
+    "alpha": (1, 4, 0b000, -1.0),   # 電流 1-4, MUX = AIN0 - AIN1 = 探針3 - 探針2
+    "beta": (1, 2, 0b001, -1.0),    # 電流 1-2, MUX = AIN0 - AIN3 = 探針3 - 探針4
 }
 
 # (PGA設定値, フルスケール[V])。レンジが狭いほど分解能は上がるが入力インピーダンスは下がる
@@ -69,7 +70,7 @@ def drive(source, sink):
 
 def measure(name):
     """伝達抵抗 [ohm] と電流 [A] を返す。接触不良なら (None, 電流)。"""
-    pin_a, pin_b, vmux = CONFIGS[name]
+    pin_a, pin_b, vmux, vsign = CONFIGS[name]
     r_sum = i_sum = 0.0
     n = 0
     for _ in range(N_CYCLES):
@@ -85,7 +86,7 @@ def measure(name):
             if current < MIN_CURRENT:
                 all_off()
                 return None, current
-            r_sum += sign * v / current
+            r_sum += sign * vsign * v / current
             i_sum += current
             n += 1
     all_off()
