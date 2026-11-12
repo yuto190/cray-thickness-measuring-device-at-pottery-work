@@ -6,5 +6,6 @@
 
 - [設計書 (コンセプト・仕様・部品・費用)](docs/design.md)
 - [実験 1 の配線と手順](docs/experiment1.md)
+- [購入リスト (型番・リンク付き)](docs/parts.md)
 - [実験 1 の測定プログラム](firmware/experiment1/main.py) — XIAO ESP32C3 + ADS1115, MicroPython
-- [4探針法の理論モデル](tools/four_point_model.py) — `python3 tools/four_point_model.py 3 6` (要 numpy)
+- [4探針法の理論モデル](tools/four_point_model.py) — `python3 tools/four_point_model.py 2.54 5.08` (要 numpy)
